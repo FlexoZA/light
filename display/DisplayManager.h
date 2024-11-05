@@ -6,11 +6,14 @@ class DisplayManager {
 public:
     DisplayManager();
     void begin();
-    void update(int mode, int brightness, unsigned long lastModeChange, unsigned long lastBrightnessChange);
+    void update(int mode, int brightness, unsigned long lastModeChange, 
+                unsigned long lastBrightnessChange, String wifiStatus = "");
     
 private:
-    Adafruit_SSD1306 _display;
     void displayMode(int mode);
     void displayBrightnessBar(int brightness);
     void displayTime();
+    void displayWifiStatus(const String& status);
+    
+    Adafruit_SSD1306 _display;
 };

@@ -13,11 +13,16 @@ void DisplayManager::begin() {
     _display.setTextColor(SSD1306_WHITE);
 }
 
-void DisplayManager::update(int mode, int brightness, unsigned long lastModeChange, unsigned long lastBrightnessChange) {
+void DisplayManager::update(int mode, int brightness, unsigned long lastModeChange, 
+                          unsigned long lastBrightnessChange, String wifiStatus) {
     _display.clearDisplay();
     
-    // Check display priority: Mode > Brightness > Time
-    if (millis() - lastModeChange < MODE_DISPLAY_DURATION) {
+    // If there's a WiFi error, display it
+    if (wifiStatus != "") {
+        displayWifiStatus(wifiStatus);
+    }
+    // Otherwise show normal display hierarchy
+    else if (millis() - lastModeChange < MODE_DISPLAY_DURATION) {
         displayMode(mode);
     } else if (millis() - lastBrightnessChange < BRIGHTNESS_DISPLAY_DURATION) {
         displayBrightnessBar(brightness);
@@ -94,4 +99,20 @@ void DisplayManager::displayTime() {
     
     _display.setCursor(x, y);
     _display.print(timeString);
+}
+
+void DisplayManager::displayWifiStatus(const String& status) {
+    _display.setTextSize(1);
+    
+    // Calculate text width and position for centering
+    int16_t x1, y1;
+    uint16_t w, h;
+    _display.getTextBounds(status.c_str(), 0, 0, &x1, &y1, &w, &h);
+    
+    // Center the text horizontally and vertically
+    int x = (SCREEN_WIDTH - w) / 2;
+    int y = (SCREEN_HEIGHT - h) / 2;
+    
+    _display.setCursor(x, y);
+    _display.println(status);
 }

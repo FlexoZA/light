@@ -3,17 +3,25 @@
 
 class InputManager {
 public:
-    InputManager(int buttonPin, int potPin);
+    InputManager(int encoderButtonPin, int encoderDTPin, int encoderCLKPin);
     void begin();
     void update();
-    bool isButtonPressed();
-    int getPotValue();
-    
+    bool isEncoderButtonPressed();
+    bool isEncoderButtonReleased();
+    int getEncoderDelta();
+
 private:
-    int _buttonPin;
-    int _potPin;
-    int _lastButtonState;
-    int _buttonState;
+    int _encoderButtonPin;
+    int _encoderDTPin;
+    int _encoderCLKPin;
+    int _lastEncoderButtonState;
+    int _encoderButtonState;
+    bool _wasEncoderButtonPressed;
+    bool _allowEncoderButtonPress;
+    int _lastEncoderDTState;
+    int _lastEncoderCLKState;
+    int _encoderPosition;
     unsigned long _lastDebounceTime;
-    void checkButton();
+    void checkEncoderButton();
+    void checkEncoder();
 };
