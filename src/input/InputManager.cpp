@@ -9,14 +9,15 @@ InputManager::InputManager(int encoderButtonPin, int encoderDTPin, int encoderCL
       _encoderButtonState(HIGH),
       _wasEncoderButtonPressed(false),
       _allowEncoderButtonPress(true),
-      _lastEncoderDTState(HIGH),
-      _lastEncoderCLKState(HIGH),
-      _encoderPosition(0) {}
+      _lastDebounceTime(0) {}
 
 void InputManager::begin() {
     pinMode(_encoderButtonPin, INPUT_PULLUP);
-    pinMode(_encoderDTPin, INPUT);
-    pinMode(_encoderCLKPin, INPUT);
+    pinMode(_encoderDTPin, INPUT_PULLUP);
+    pinMode(_encoderCLKPin, INPUT_PULLUP);
+
+    // Initialize the rotary encoder with the ESP32Encoder library
+    encoder.attachFullQuad(_encoderCLKPin, _encoderDTPin); // Attach the CLK and DT pins
 }
 
 void InputManager::update() {
@@ -58,23 +59,24 @@ bool InputManager::isEncoderButtonReleased() {
 }
 
 void InputManager::checkEncoder() {
-    int dtState = digitalRead(_encoderDTPin);
-    int clkState = digitalRead(_encoderCLKPin);
+    // Read the current encoder position
+    long position = encoder.getCount(); // Get the current position of the encoder
 
-    if (dtState != _lastEncoderDTState || clkState != _lastEncoderCLKState) {
-        if (clkState != _lastEncoderCLKState) {
-            if (dtState != _lastEncoderDTState) {
-                _encoderPosition += (dtState != clkState) ? 1 : -1;
-            }
-        }
+    // Update the position to change the direction
+    // Make the clockwise rotation result in an increased value (more)
+    // And the counterclockwise rotation result in a decreased value (less)
+    if (position > 0) {
+        Serial.print("Encoder Position: ");
+        Serial.println(position);  // Clockwise (more)
+    } else if (position < 0) {
+        Serial.print("Encoder Position: ");
+        Serial.println(position);  // Counterclockwise (less)
     }
-
-    _lastEncoderDTState = dtState;
-    _lastEncoderCLKState = clkState;
 }
 
 int InputManager::getEncoderDelta() {
-    int delta = _encoderPosition;
-    _encoderPosition = 0;
+    long position = encoder.getCount(); // Get the current position of the encoder
+    int delta = -position;  // The delta is the position change
+    encoder.clearCount();  // Clear the count after reading
     return delta;
 }

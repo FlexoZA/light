@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <ESP32Encoder.h>  // Include the ESP32Encoder library
 
 class InputManager {
 public:
@@ -18,10 +19,9 @@ private:
     int _encoderButtonState;
     bool _wasEncoderButtonPressed;
     bool _allowEncoderButtonPress;
-    int _lastEncoderDTState;
-    int _lastEncoderCLKState;
-    int _encoderPosition;
     unsigned long _lastDebounceTime;
+    ESP32Encoder encoder;  // Encoder object from ESP32Encoder library
+
     void checkEncoderButton();
     void checkEncoder();
 };
