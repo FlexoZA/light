@@ -10,6 +10,7 @@
 #define BUTTON2_PIN 4
 #define BUTTON3_PIN 5
 #define BUTTON4_PIN 18
+#define DHT_PIN 19
 
 // OLED Configuration
 #define SCREEN_WIDTH 128

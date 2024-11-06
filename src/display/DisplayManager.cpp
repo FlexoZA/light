@@ -85,7 +85,7 @@ void DisplayManager::displayTime() {
     }
     
     char timeString[9];
-    strftime(timeString, sizeof(timeString), "%H:%M:%S", &timeinfo);
+    strftime(timeString, sizeof(timeString), "%H:%M", &timeinfo);
     
     // Calculate text width and position for centering
     _display.setTextSize(2);

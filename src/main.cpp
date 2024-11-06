@@ -3,17 +3,21 @@
 #include "led/LEDManager.h"
 #include "display/DisplayManager.h"
 #include "time/TimeManager.h"
+#include "temp/TempManager.h"
 #include <WiFi.h>
 
 InputManager inputManager(encoderButton_PIN, encoderDT_PIN, encoderCLK_PIN);
 LEDManager ledManager(LED_PIN, NUM_LEDS);
 DisplayManager displayManager;
 TimeManager timeManager;
+TempManager tempManager;
 
 unsigned long lastBrightnessChangeTime = 0;
 unsigned long lastModeChangeTime = 0;
 unsigned long lastWifiCheckTime = 0;
-const unsigned long WIFI_CHECK_INTERVAL = 5000; // Check WiFi every 5 seconds
+unsigned long lastTempCheckTime = 0;
+const unsigned long WIFI_CHECK_INTERVAL = 5000;
+const unsigned long TEMP_CHECK_INTERVAL = 2000;
 
 void setup() {
     Serial.begin(9600);
@@ -22,11 +26,12 @@ void setup() {
     inputManager.begin();
     ledManager.begin();
     displayManager.begin();
+    tempManager.begin();  // Add this line
     
     // Connect to WiFi
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     int wifiAttempts = 0;
-    while (WiFi.status() != WL_CONNECTED && wifiAttempts < 20) { // Try for 10 seconds
+    while (WiFi.status() != WL_CONNECTED && wifiAttempts < 20) {
         delay(500);
         Serial.print(".");
         wifiAttempts++;
@@ -50,17 +55,23 @@ void loop() {
         lastWifiCheckTime = millis();
     }
     
+    // Update temperature readings
+    if (millis() - lastTempCheckTime > TEMP_CHECK_INTERVAL) {
+        tempManager.update();
+        lastTempCheckTime = millis();
+    }
+    
     // Check for encoder button press
     if (inputManager.isEncoderButtonPressed()) {
         ledManager.setMode((ledManager.getMode() + 1) % 2);
         lastModeChangeTime = millis();
     }
-
+    
     // Check for encoder button release
     if (inputManager.isEncoderButtonReleased()) {
         // Do nothing, wait for the next button press
     }
-
+    
     // Check for encoder rotation
     int encoderDelta = inputManager.getEncoderDelta();
     if (encoderDelta != 0) {
@@ -68,12 +79,12 @@ void loop() {
         ledManager.setBrightness(newBrightness);
         lastBrightnessChangeTime = millis();
     }
-
+    
     // Update components
     ledManager.update();
-    displayManager.update(ledManager.getMode(), 
-                         ledManager.getBrightness(), 
-                         lastModeChangeTime, 
+    displayManager.update(ledManager.getMode(),
+                         ledManager.getBrightness(),
+                         lastModeChangeTime,
                          lastBrightnessChangeTime,
                          timeManager.getStatusMessage());
 }
