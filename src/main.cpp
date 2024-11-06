@@ -1,6 +1,9 @@
 #include "config/Config.h"
 #include "input/InputManager.h"
 #include "led/LEDManager.h"
+#include "fan/FanManager.h"
+#include "media/MediaManager.h"
+#include "mode/ModeManager.h"
 #include "display/DisplayManager.h"
 #include "time/TimeManager.h"
 #include "temp/TempManager.h"
@@ -8,12 +11,13 @@
 
 InputManager inputManager(encoderButton_PIN, encoderDT_PIN, encoderCLK_PIN);
 LEDManager ledManager(LED_PIN, NUM_LEDS);
+//FanManager fanManager;
+//MediaManager mediaManager;
+ModeManager modeManager(inputManager, ledManager, fanManager, mediaManager);
 DisplayManager displayManager;
 TimeManager timeManager;
 TempManager tempManager;
 
-unsigned long lastBrightnessChangeTime = 0;
-unsigned long lastModeChangeTime = 0;
 unsigned long lastWifiCheckTime = 0;
 unsigned long lastTempCheckTime = 0;
 const unsigned long WIFI_CHECK_INTERVAL = 5000;
@@ -25,8 +29,11 @@ void setup() {
     // Initialize components
     inputManager.begin();
     ledManager.begin();
+    fanManager.begin();
+    mediaManager.begin();
     displayManager.begin();
-    tempManager.begin();  // Add this line
+    tempManager.begin();
+    timeManager.begin();
     
     // Connect to WiFi
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -42,12 +49,11 @@ void setup() {
     } else {
         Serial.println("WiFi connection failed");
     }
-    
-    timeManager.begin();
 }
 
 void loop() {
     inputManager.update();
+    modeManager.update();
     
     // Periodically check WiFi status
     if (millis() - lastWifiCheckTime > WIFI_CHECK_INTERVAL) {
@@ -61,30 +67,29 @@ void loop() {
         lastTempCheckTime = millis();
     }
     
-    // Check for encoder button press
-    if (inputManager.isEncoderButtonPressed()) {
-        ledManager.setMode((ledManager.getMode() + 1) % 2);
-        lastModeChangeTime = millis();
-    }
-    
-    // Check for encoder button release
-    if (inputManager.isEncoderButtonReleased()) {
-        // Do nothing, wait for the next button press
-    }
-    
-    // Check for encoder rotation
+    // Update encoder delta
     int encoderDelta = inputManager.getEncoderDelta();
     if (encoderDelta != 0) {
-        int newBrightness = constrain(ledManager.getBrightness() + encoderDelta, 0, 255);
-        ledManager.setBrightness(newBrightness);
-        lastBrightnessChangeTime = millis();
+        switch (modeManager.getCurrentMode()) {
+            case Mode::Light:
+                ledManager.updateBrightness(encoderDelta);
+                break;
+            case Mode::Fan:
+                fanManager.updateSpeed(encoderDelta);
+                break;
+            case Mode::Media:
+                mediaManager.adjustVolume(encoderDelta);
+                break;
+        }
     }
     
     // Update components
     ledManager.update();
-    displayManager.update(ledManager.getMode(),
+    fanManager.update();
+    mediaManager.update();
+    displayManager.update(modeManager.getCurrentMode(),
                          ledManager.getBrightness(),
-                         lastModeChangeTime,
-                         lastBrightnessChangeTime,
+                         fanManager.getSpeed(),
+                         mediaManager.getVolume(),
                          timeManager.getStatusMessage());
 }
