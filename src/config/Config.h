@@ -30,5 +30,5 @@
 #define MODE_DISPLAY_DURATION 2000
 
 // WiFi Configuration
-#define WIFI_SSID "Lab"
-#define WIFI_PASSWORD "jason789"
+#define WIFI_SSID "flexoZA"
+#define WIFI_PASSWORD "Chr0846400936#"

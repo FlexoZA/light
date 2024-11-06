@@ -76,7 +76,7 @@ void InputManager::checkEncoder() {
 
 int InputManager::getEncoderDelta() {
     long position = encoder.getCount(); // Get the current position of the encoder
-    int delta = -position;  // The delta is the position change
+    int delta = position;  // The delta is the position change
     encoder.clearCount();  // Clear the count after reading
     return delta;
 }
